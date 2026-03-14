@@ -1,140 +1,125 @@
 import { SYSTEM_PROMPT, buildUserPrompt } from "../../../lib/prompts";
 
-function extractJson(text) {
-  if (!text || typeof text !== "string") {
-    throw new Error("AI returned empty text");
+// ─── PROVIDER CONFIGS ─────────────────────────────────────────────────────────
+const PROVIDERS = {
+  anthropic: {
+    url: "https://api.anthropic.com/v1/messages",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    }),
+    buildBody: (model, systemPrompt, userPrompt, imageBase64, mediaType) => JSON.stringify({
+      model: model || "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+          { type: "text", text: userPrompt }
+        ]
+      }]
+    }),
+    extractText: (data) => {
+      if (!Array.isArray(data.content)) return "";
+      return data.content.filter(b => b?.type === "text").map(b => b.text || "").join("\n").trim();
+    }
+  },
+
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`,
+    }),
+    buildBody: (model, systemPrompt, userPrompt, imageBase64, mediaType) => JSON.stringify({
+      model: model || "gpt-4o",
+      max_tokens: 2000,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:${mediaType};base64,${imageBase64}`, detail: "high" } },
+            { type: "text", text: userPrompt }
+          ]
+        }
+      ]
+    }),
+    extractText: (data) => data?.choices?.[0]?.message?.content?.trim() || ""
+  },
+
+  gemini: {
+    url: (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model || "gemini-1.5-flash"}:generateContent?key=${key}`,
+    buildHeaders: () => ({ "Content-Type": "application/json" }),
+    buildBody: (model, systemPrompt, userPrompt, imageBase64, mediaType) => JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{
+        parts: [
+          { inline_data: { mime_type: mediaType, data: imageBase64 } },
+          { text: userPrompt }
+        ]
+      }],
+      generationConfig: { maxOutputTokens: 2000 }
+    }),
+    extractText: (data) => data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ""
   }
-
-  let cleaned = text.trim();
-
-  // Remove markdown fences
-  cleaned = cleaned.replace(/^```json\s*/i, "");
-  cleaned = cleaned.replace(/^```\s*/i, "");
-  cleaned = cleaned.replace(/\s*```$/i, "");
-
-  // Try direct parse
-  try {
-    return JSON.parse(cleaned);
-  } catch {}
-
-  // Try extracting JSON from surrounding text
-  const firstBrace = cleaned.indexOf("{");
-  const lastBrace = cleaned.lastIndexOf("}");
-
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    const maybeJson = cleaned.slice(firstBrace, lastBrace + 1);
-    return JSON.parse(maybeJson);
-  }
-
-  throw new Error("No valid JSON found in AI response");
-}
+};
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { imageBase64, mediaType, mode, modelId, loraWord, apiKey, aiModel } = body;
+    const { imageBase64, mediaType, mode, modelId, loraWord, apiKey, aiModel, provider = "anthropic" } = body;
 
-    if (!apiKey) {
-      return Response.json({ error: "API key required" }, { status: 400 });
-    }
-
-    if (!imageBase64) {
-      return Response.json({ error: "Image required" }, { status: 400 });
-    }
+    if (!apiKey) return Response.json({ error: "API key required" }, { status: 400 });
+    if (!imageBase64) return Response.json({ error: "Image required" }, { status: 400 });
 
     const userPrompt = buildUserPrompt(mode, modelId, loraWord);
+    const providerConfig = PROVIDERS[provider] || PROVIDERS.anthropic;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const url = typeof providerConfig.url === "function"
+      ? providerConfig.url(aiModel, apiKey)
+      : providerConfig.url;
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: aiModel || "claude-sonnet-4-20250514",
-        max_tokens: 1500,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: {
-                  type: "base64",
-                  media_type: mediaType,
-                  data: imageBase64,
-                },
-              },
-              {
-                type: "text",
-                text: `${userPrompt}
-
-Return ONLY one valid JSON object.
-Do not use markdown.
-Do not wrap the answer in triple backticks.
-Do not add any explanation before or after the JSON.`,
-              },
-            ],
-          },
-        ],
-      }),
+      headers: providerConfig.buildHeaders(apiKey),
+      body: providerConfig.buildBody(aiModel, SYSTEM_PROMPT, userPrompt, imageBase64, mediaType),
     });
 
     const responseText = await response.text();
-
     let data;
     try {
       data = JSON.parse(responseText);
     } catch {
-      console.error("Anthropic returned non-JSON:", responseText);
-      return Response.json(
-        { error: "Anthropic returned invalid response", raw: responseText },
-        { status: 500 }
-      );
+      console.error("Provider returned non-JSON:", responseText.slice(0, 300));
+      return Response.json({ error: "Provider returned invalid response", raw: responseText.slice(0, 300) }, { status: 500 });
     }
 
     if (!response.ok) {
-      console.error("Anthropic API error:", data);
-      return Response.json(
-        { error: data?.error?.message || `Anthropic API error ${response.status}` },
-        { status: response.status }
-      );
+      const errMsg = data?.error?.message || data?.error?.errors?.[0]?.message || `API error ${response.status}`;
+      return Response.json({ error: errMsg }, { status: response.status });
     }
 
-    const rawText = Array.isArray(data.content)
-      ? data.content
-          .filter((block) => block?.type === "text")
-          .map((block) => block.text || "")
-          .join("\n")
-          .trim()
-      : "";
+    const rawText = providerConfig.extractText(data);
+    console.log("RAW AI TEXT (first 300):", rawText.slice(0, 300));
 
-    console.log("RAW AI TEXT:", rawText);
-
-    let parsed;
-    try {
-      parsed = extractJson(rawText);
-    } catch (parseError) {
-      console.error("Parse error:", parseError);
-
-      return Response.json(
-        {
-          error: "Failed to parse AI response. Try again.",
-          raw: rawText,
-        },
-        { status: 500 }
-      );
+    if (!rawText) {
+      return Response.json({ error: "AI returned empty response. Try again." }, { status: 500 });
     }
 
-    return Response.json({ result: parsed });
+    // The prompt is plain text — just return it directly
+    // No JSON parsing needed since our system prompt outputs a single text prompt
+    return Response.json({
+      result: {
+        prompt: rawText,
+        analysis: null // analysis dropdown removed in favor of plain text output
+      }
+    });
+
   } catch (err) {
     console.error("Route error:", err);
-
-    return Response.json(
-      { error: err?.message || "Unknown server error" },
-      { status: 500 }
-    );
+    return Response.json({ error: err?.message || "Unknown server error" }, { status: 500 });
   }
 }

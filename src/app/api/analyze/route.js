@@ -1,4 +1,4 @@
-import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompts";
+import { SYSTEM_PROMPT, buildUserPrompt } from "../../../lib/prompts";
 
 export async function POST(request) {
   try {

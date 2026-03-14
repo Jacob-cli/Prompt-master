@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { MODELS, AI_MODELS, LORA_TRIGGER } from "@/lib/prompts";
+import { MODELS, AI_MODELS, LORA_TRIGGER } from "../lib/prompts";
 
 // ─── STYLES (scoped inline to avoid CSS module complexity) ───────────────────
 const S = {

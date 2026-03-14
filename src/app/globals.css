@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080808;
+  --surface: #0f0f0f;
+  --card: #121212;
+  --border: #1c1c1c;
+  --accent: #b8ff47;
+  --accent-dim: rgba(184,255,71,0.08);
+  --text: #e0e0e0;
+  --muted: #555;
+  --sub: #888;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+select option { background: #111; }
+
+* { -webkit-tap-highlight-color: transparent; }

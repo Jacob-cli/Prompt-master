@@ -314,7 +314,7 @@ const loraBodyProtectionNegative = isLora
 // Front-load the most visually dominant elements.
 // Repeat critical scene anchors for weight.
 if (modelId === "zimage_turbo") {
-  return \`\${subjectBlock}
+  return `${subjectBlock}
 
 ====
 TARGET MODEL: Z-Image Turbo
@@ -330,9 +330,9 @@ TURBO TOKEN RULES - guidance_scale 0.0 means the model free-runs:
 - 180-260 words total - density matters at 0.0 CFG.
 
 REQUIRED TOKEN SEQUENCE:
-\${isLora
-  ? \`"\${lora}", [FRAMING], [POSE GEOMETRY], [CLOTHING + ACCESSORIES], [PRIMARY LIGHT: position+K+quality+target], [SECONDARY LIGHT or "no fill, ambient only"], [SKIN LIGHT BEHAVIOR], [BG LAYER 1], [BG LAYER 2], [BG LAYER 3], [CAMERA: focal length + angle + DOF], [EXPOSURE ANCHOR], [LIGHT RESTATEMENT in different tokens]\`
-  : \`[FRAMING], [POSE GEOMETRY], [SUBJECT DETAILS: skin finish under light + makeup + hair + outfit + accessories], [PRIMARY LIGHT], [SECONDARY LIGHT], [BG LAYER 1], [BG LAYER 2], [BG LAYER 3], [CAMERA], [EXPOSURE ANCHOR], [LIGHT RESTATEMENT]\`
+${isLora
+  ? `"${lora}", [FRAMING], [POSE GEOMETRY], [CLOTHING + ACCESSORIES], [PRIMARY LIGHT: position+K+quality+target], [SECONDARY LIGHT or "no fill, ambient only"], [SKIN LIGHT BEHAVIOR], [BG LAYER 1], [BG LAYER 2], [BG LAYER 3], [CAMERA: focal length + angle + DOF], [EXPOSURE ANCHOR], [LIGHT RESTATEMENT in different tokens]`
+  : `[FRAMING], [POSE GEOMETRY], [SUBJECT DETAILS: skin finish under light + makeup + hair + outfit + accessories], [PRIMARY LIGHT], [SECONDARY LIGHT], [BG LAYER 1], [BG LAYER 2], [BG LAYER 3], [CAMERA], [EXPOSURE ANCHOR], [LIGHT RESTATEMENT]`
 }
 
 Return exactly:
@@ -341,14 +341,14 @@ Return exactly:
 - No negative field
 - No sentences - noun phrases and adjective clusters only, comma-separated
 - 180-260 words
-- Raw JSON only\`;
+- Raw JSON only`;
 }
   
 // - Z-IMAGE BASE ----------------
 // guidance_scale: 3.5-7, responds well to structured prompts
 // Positive and negative both matter here
 if (modelId === "zimage_base") {
-  return \`\${subjectBlock}
+  return `${subjectBlock}
 
 ====
 TARGET MODEL: Z-Image Base
@@ -359,15 +359,15 @@ The model follows CFG guidance meaningfully - both prompts have real weight.
 Use the same noun-phrase / adjective-cluster format as Turbo. No narrative sentences.
 
 POSITIVE STRUCTURE:
-\${isLora
-  ? \`"\${lora}", [FRAMING tokens], [POSE GEOMETRY], [CLOTHING + ACCESSORIES], [PRIMARY LIGHT: position+K+quality+target], [FILL LIGHT or "no fill, shadow side unlit"], [SKIN LIGHT BEHAVIOR], [BG LAYER 1], [BG LAYER 2 -- SCENE ANCHOR first appearance], [BG LAYER 3], [CAMERA], [EXPOSURE tonal anchor], [SCENE ANCHOR restatement in different phrasing]\`
-  : \`[FRAMING tokens], [POSE GEOMETRY], [SUBJECT: skin-finish-under-light, makeup, hair-fall, outfit, accessories], [PRIMARY LIGHT], [FILL or absence], [BG LAYER 1], [BG LAYER 2 -- SCENE ANCHOR first], [BG LAYER 3], [CAMERA], [EXPOSURE anchor], [SCENE ANCHOR restatement]\`
+${isLora
+  ? `"${lora}", [FRAMING tokens], [POSE GEOMETRY], [CLOTHING + ACCESSORIES], [PRIMARY LIGHT: position+K+quality+target], [FILL LIGHT or "no fill, shadow side unlit"], [SKIN LIGHT BEHAVIOR], [BG LAYER 1], [BG LAYER 2 -- SCENE ANCHOR first appearance], [BG LAYER 3], [CAMERA], [EXPOSURE tonal anchor], [SCENE ANCHOR restatement in different phrasing]`
+  : `[FRAMING tokens], [POSE GEOMETRY], [SUBJECT: skin-finish-under-light, makeup, hair-fall, outfit, accessories], [PRIMARY LIGHT], [FILL or absence], [BG LAYER 1], [BG LAYER 2 -- SCENE ANCHOR first], [BG LAYER 3], [CAMERA], [EXPOSURE anchor], [SCENE ANCHOR restatement]`
 }
 
 NEGATIVE: Target specifically:
-\${isLora
-  ? \`- \${loraBodyProtectionNegative}wrong lighting direction, overexposed, flat lighting, wrong background, different scene, different environment, different location\`
-  : \`- wrong lighting, flat lighting, overexposed, underexposed, wrong background, bad anatomy, distorted\`
+${isLora
+  ? `- ${loraBodyProtectionNegative}wrong lighting direction, overexposed, flat lighting, wrong background, different scene, different environment, different location`
+  : `- wrong lighting, flat lighting, overexposed, underexposed, wrong background, bad anatomy, distorted`
 }
 
 Return exactly:
@@ -377,14 +377,14 @@ Requirements:
 
 - positive: 150-220 words, cinematographic language, structured as above
 - negative: 30-60 words, specific to what could go wrong in this scene
-- Return raw JSON only\`;
+- Return raw JSON only`;
 }
   
 // - NANO BANANA PRO ----------
 // Prompt-pair model, image editing friendly
 // Positive and negative work as a matched editing pair
 if (modelId === "nano_banana") {
-  return \`\${subjectBlock}
+  return `${subjectBlock}
 
 ====
 TARGET MODEL: Nano Banana Pro
@@ -395,15 +395,15 @@ Think of positive as "bring toward this" and negative as "push away from this."
 Be more compact than other models - clarity over density.
 
 POSITIVE: Compact but precise.
-\${isLora
-  ? \`Start with trigger word. Then: scene environment + lighting setup + pose geometry + clothing. Keep it dense and specific but not overwhelming.\`
-  : \`Most dominant visual elements first. Lighting setup. Background. Camera feel. Tonal range.\`
+${isLora
+  ? `Start with trigger word. Then: scene environment + lighting setup + pose geometry + clothing. Keep it dense and specific but not overwhelming.`
+  : `Most dominant visual elements first. Lighting setup. Background. Camera feel. Tonal range.`
 }
 
 NEGATIVE: Actively protect the scene.
-\${isLora
-  ? \`\${loraBodyProtectionNegative}wrong lighting, wrong location, wrong background, identity drift, different character\`
-  : \`wrong lighting, wrong scene, overexposed, underexposed, flat, bad anatomy\`
+${isLora
+  ? `${loraBodyProtectionNegative}wrong lighting, wrong location, wrong background, identity drift, different character`
+  : `wrong lighting, wrong scene, overexposed, underexposed, flat, bad anatomy`
 }
 
 Return exactly:
@@ -413,14 +413,14 @@ Requirements:
 
 - positive: 80-140 words - compact but specific
 - negative: 20-40 words - targeted exclusions
-- Return raw JSON only\`;
+- Return raw JSON only`;
 }
   
 // - WAN 2.2 ----------------
 // guidance_scale: 3.5, video-adjacent model
 // Responds to motion energy cues if scene suggests them
 if (modelId === "wan22") {
-  return \`\${subjectBlock}
+  return `${subjectBlock}
 
 ====
 TARGET MODEL: Wan 2.2
@@ -435,15 +435,15 @@ Wan 2.2 is a video-adjacent model. It responds well to:
 Only add motion cues if the reference image visually implies them (e.g., hair caught mid-movement, fabric with kinetic drape). If the scene is static, do not add motion.
 
 POSITIVE: Spatial and temporal structure.
-\${isLora
-  ? \`[TRIGGER WORD] [pose with spatial anchor -- where the subject stands in the frame] [clothing with fabric weight description] [lighting -- spatial origin, direction, temperature, quality] [background spatial layers from near to far] [camera configuration] [any motion energy cues if present in reference] [tonal anchors]\`
-  : \`[subject spatial positioning] [pose geometry] [outfit with fabric behavior] [lighting spatial breakdown] [background near-to-far] [camera] [motion energy if present] [tonal range]\`
+${isLora
+  ? `[TRIGGER WORD] [pose with spatial anchor -- where the subject stands in the frame] [clothing with fabric weight description] [lighting -- spatial origin, direction, temperature, quality] [background spatial layers from near to far] [camera configuration] [any motion energy cues if present in reference] [tonal anchors]`
+  : `[subject spatial positioning] [pose geometry] [outfit with fabric behavior] [lighting spatial breakdown] [background near-to-far] [camera] [motion energy if present] [tonal range]`
 }
 
 NEGATIVE: Protect spatial integrity.
-\${isLora
-  ? \`\${loraBodyProtectionNegative}static where motion implied, blurred subject, wrong depth, wrong spatial relationship\`
-  : \`wrong spatial layout, flat depth, distorted geometry, wrong lighting direction\`
+${isLora
+  ? `${loraBodyProtectionNegative}static where motion implied, blurred subject, wrong depth, wrong spatial relationship`
+  : `wrong spatial layout, flat depth, distorted geometry, wrong lighting direction`
 }
 
 Return exactly:
@@ -454,13 +454,13 @@ Requirements:
 - positive: 140-200 words
 - negative: 25-50 words
 - Add motion energy cues only if clearly present in the reference
-- Return raw JSON only\`;
+- Return raw JSON only`;
 }
   
 // - QWEN IMAGE ----------------------
 // cfg: 5-7, strong prompt adherence, tolerates detail well
 if (modelId === "qwen") {
-  return \`\${subjectBlock}
+  return `${subjectBlock}
 
 ====
 TARGET MODEL: Qwen Image
@@ -469,15 +469,15 @@ cfg: 5-7 | positive + negative
 Qwen Image has strong prompt adherence at cfg 5-7. It can handle high token detail and will attempt to follow everything you specify. Use this - be exhaustive.
 
 POSITIVE: Maximum technical detail. Qwen will follow it.
-\${isLora
-  ? \`[TRIGGER WORD] [full pose geometry -- every joint, every hand position] [clothing -- fabric type, exact color, fit, behavior under light] [accessories -- every item, exact placement, material] [primary light source -- full cinematographic breakdown] [secondary sources or fill absence] [background -- every depth layer, every visible architectural element, focus state] [camera -- focal length, depth of field, lens rendering] [exposure -- tonal range, shadow and highlight behavior] [scene restatement]\`
-  : \`[subject full description -- skin finish under specific light, makeup visible, hair exact behavior] [pose -- every joint] [clothing and accessories] [lighting full breakdown] [background all layers] [camera full] [exposure full] [scene atmosphere]\`
+${isLora
+  ? `[TRIGGER WORD] [full pose geometry -- every joint, every hand position] [clothing -- fabric type, exact color, fit, behavior under light] [accessories -- every item, exact placement, material] [primary light source -- full cinematographic breakdown] [secondary sources or fill absence] [background -- every depth layer, every visible architectural element, focus state] [camera -- focal length, depth of field, lens rendering] [exposure -- tonal range, shadow and highlight behavior] [scene restatement]`
+  : `[subject full description -- skin finish under specific light, makeup visible, hair exact behavior] [pose -- every joint] [clothing and accessories] [lighting full breakdown] [background all layers] [camera full] [exposure full] [scene atmosphere]`
 }
 
 NEGATIVE: Exhaustive exclusions.
-\${isLora
-  ? \`\${loraBodyProtectionNegative}wrong lighting color, wrong lighting direction, incorrect background, wrong environment, wrong clothing, missing accessories, flat lighting, overexposed, underexposed, blurry background when sharp in reference, sharp background when blurry in reference\`
-  : \`wrong lighting, wrong scene, overexposed, underexposed, incorrect clothing, wrong background, bad anatomy, distorted limbs, extra limbs\`
+${isLora
+  ? `${loraBodyProtectionNegative}wrong lighting color, wrong lighting direction, incorrect background, wrong environment, wrong clothing, missing accessories, flat lighting, overexposed, underexposed, blurry background when sharp in reference, sharp background when blurry in reference`
+  : `wrong lighting, wrong scene, overexposed, underexposed, incorrect clothing, wrong background, bad anatomy, distorted limbs, extra limbs`
 }
 
 Return exactly:
@@ -487,15 +487,15 @@ Requirements:
 
 - positive: 200-300 words - Qwen can handle it and will use it
 - negative: 50-80 words - be specific to what could go wrong in this exact scene
-- Return raw JSON only\`;
+- Return raw JSON only`;
 }
   
 // Fallback - should not reach here with valid modelId
-return \`\${subjectBlock}
+return `${subjectBlock}
 
 Analyze the reference image fully using the analysis axes provided in the system prompt.
 Return: {"positive":"...","negative":"..."}
-Return raw JSON only.\`;
+Return raw JSON only.`;
 }
 
 // ============================================================
